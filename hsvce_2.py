@@ -4,9 +4,8 @@ from windowcapture import WindowCapture
 import win32gui, win32ui, win32con
 
 
-image = cv.imread("C:\\Users\\d3x\\Desktop\\OpenCv_test_ground\\board\\example_full_board.png")
-#https://youtu.be/WymCpVUPWQ4?t=1086
-window = win32gui.FindWindow(None, "League of Legends")
+image = cv.imread("C:\\Users\\d3x\\Desktop\\OpenCv_test_ground\\champion_image\\taric.png")
+image_2 = cv.imread("C:\\Users\\d3x\\Desktop\\OpenCv_test_ground\\champion_image\\taric.png")
 
 window_name = "HSV Editor"
 color_win_position = [(350,30), (700,90)]
@@ -164,8 +163,19 @@ while(1):
     v_add = cv.getTrackbarPos("v_add", window_name)
     v_sub = cv.getTrackbarPos("v_sub", window_name)
 
-    hsv = cv.cvtColor(window, cv.COLOR_BGR2HSV)
+    hsv = cv.cvtColor(image, cv.COLOR_BGR2HSV)
+    oiriginal_hsv_image = cv.cvtColor(image_2, cv.COLOR_BGR2HSV)
 
+    #Original Image
+    og_h, og_s, og_v = cv.split(oiriginal_hsv_image)
+    og_s = shift_channel(og_s, s_add)
+    og_s = shift_channel(og_s, -s_sub)
+    og_v = shift_channel(og_v, v_add)
+    og_v = shift_channel(og_v, -v_sub)
+    oiriginal_hsv_image = cv.merge([og_h, og_s, og_v])
+
+
+    #Normal Image
     h, s, v = cv.split(hsv)
     s = shift_channel(s, s_add)
     s = shift_channel(s, -s_sub)
@@ -173,14 +183,24 @@ while(1):
     v = shift_channel(v, -v_sub)
     hsv = cv. merge([h, s, v])
 
+
     lower = np.array([h_min, s_min, v_min])
     upper = np.array([h_max, s_max, v_max])
+
+    #Use original values to be able to use the Trackbar to revert the changes
+    hsv = oiriginal_hsv_image
 
     mask = cv.inRange(hsv, lower, upper)
     result = cv.bitwise_and(hsv, hsv, mask=mask)
 
-    window = cv.cvtColor(result, cv.COLOR_HSV2BGR)
-    cv.imshow("Editor_View", window)
+    image = cv.cvtColor(result, cv.COLOR_HSV2BGR)
+    cv.imshow("Editor_View", image)
+    if key==ord('z'):
+        print("Image has been saved")
+        f = open("HSV_Values.txt", "w")
+        f.write(f"h_min = {h_min}, v_min = {v_min},s_min = {s_min}, h_max = {h_max}, v_max = {v_max}, s_max = {s_max}, s_add = {s_add}, s_sub = {s_sub}, v_add {v_add}, v_sub {v_sub}")
+        f.close()
+        cv.imwrite("test.png", image )
 
 
 
